@@ -145,18 +145,22 @@ void FSNextionLib::setGauge(const char* component, uint16_t value) {
     sendCommand(cmd);
 }
 
-// Page control - EKSİK OLAN FONKSİYONLAR
-void FSNextionLib::setPage(byte pageId) {
+// Page control - YENİ İSİMLER
+void FSNextionLib::setPageById(byte pageId) {
     String cmd = "page " + String(pageId);
     sendCommand(cmd);
 }
 
-void FSNextionLib::setPage(const char* pageName) {
+void FSNextionLib::setPageByName(const char* pageName) {
     String cmd = "page " + String(pageName);
     sendCommand(cmd);
 }
 
-// System commands - EKSİK OLAN FONKSİYONLAR
+void FSNextionLib::setPageByName(const String& pageName) {
+    setPageByName(pageName.c_str());
+}
+
+// System commands
 void FSNextionLib::sleep(bool enable) {
     sendCommand(enable ? "sleep=1" : "sleep=0");
 }
@@ -341,7 +345,7 @@ void FSNextionLib::listen() {
     }
 }
 
-// Callback registration - EKSİK OLAN FONKSİYON
+// Callback registration
 void FSNextionLib::onTouch(TouchEventCallback callback) {
     _touchCallback = callback;
 }

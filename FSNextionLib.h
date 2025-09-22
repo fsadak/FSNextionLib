@@ -43,9 +43,10 @@ public:
     void setProgress(const char* component, byte value);
     void setGauge(const char* component, uint16_t value);
     
-    // Page control
-    void setPage(byte pageId);
-    void setPage(const char* pageName);
+    // Page control - BELİRSİZLİĞİ ÖNLEMEK İÇİN İSİM DEĞİŞTİRDİK
+    void setPageById(byte pageId);
+    void setPageByName(const char* pageName);
+    void setPageByName(const String& pageName);
     
     // System commands
     void sleep(bool enable);

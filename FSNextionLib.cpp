@@ -3,6 +3,11 @@
 // Constructor
 FSNextionLib::FSNextionLib(HardwareSerial& serial) : _serial(serial) {}
 
+// Component key oluşturma - ARTIK STATIC
+uint16_t FSNextionLib::_makeComponentKey(byte pageId, byte componentId) {
+    return (pageId << 8) | componentId;
+}
+
 // Initializes communication
 void FSNextionLib::begin(long baud, int8_t rxPin, int8_t txPin) {
     #if defined(ESP32)
@@ -20,6 +25,12 @@ void FSNextionLib::begin(long baud, int8_t rxPin, int8_t txPin) {
     _clearBuffer();
     
     _log("Nextion library initialized");
+    
+    // Nextion'un boot olmasını bekle (3 saniye)
+    delay(3000);
+    
+    // Otomatik olarak component listesi iste
+    requestComponentList();
 }
 
 // Sends command termination characters
@@ -36,14 +47,14 @@ void FSNextionLib::_clearBuffer() {
     }
 }
 
-// Logging function
-void FSNextionLib::_log(const String& message) {
+// Logging function - ARTIK CONST
+void FSNextionLib::_log(const String& message) const {
     if (_debug) {
         Serial.println("[FSNextion] " + message);
     }
 }
 
-void FSNextionLib::_log(const char* message) {
+void FSNextionLib::_log(const char* message) const {
     if (_debug) {
         Serial.print("[FSNextion] ");
         Serial.println(message);
@@ -145,7 +156,7 @@ void FSNextionLib::setGauge(const char* component, uint16_t value) {
     sendCommand(cmd);
 }
 
-// Page control - YENİ İSİMLER
+// Page control
 void FSNextionLib::setPageById(byte pageId) {
     String cmd = "page " + String(pageId);
     sendCommand(cmd);
@@ -176,6 +187,298 @@ void FSNextionLib::reset() {
 void FSNextionLib::setBrightness(byte brightness) {
     String cmd = "dim=" + String(brightness);
     sendCommand(cmd);
+}
+
+// Component listesi isteği gönder
+void FSNextionLib::requestComponentList() {
+    _waitingForComponentList = true;
+    _componentListBuffer = "";
+    _components.clear();
+    _nameMap.clear();
+    _idMap.clear();
+    _componentListLoaded = false;
+    
+    _log("Requesting component list from Nextion...");
+}
+
+// Component listesi yüklü mü?
+bool FSNextionLib::isComponentListLoaded() const {
+    return _componentListLoaded;
+}
+
+// Component listesi callback'i
+void FSNextionLib::setComponentListCallback(ComponentListCallback callback) {
+    _componentListCallback = callback;
+}
+
+// Component type mapping
+String FSNextionLib::_mapComponentType(const String& nextionType) {
+    // Nextion component type'larını standartlaştır
+    if (nextionType == "button" || nextionType.startsWith("b")) return "button";
+    if (nextionType == "text" || nextionType.startsWith("t")) return "text";
+    if (nextionType == "number" || nextionType.startsWith("n")) return "number";
+    if (nextionType == "gauge" || nextionType.startsWith("g")) return "gauge";
+    if (nextionType == "progress" || nextionType.startsWith("j")) return "progress";
+    if (nextionType == "slider" || nextionType.startsWith("z")) return "slider";
+    return nextionType;
+}
+
+// Component listesi satırını parse et
+void FSNextionLib::_parseComponentLine(const String& line) {
+    // Format: "pageId, componentId, name, type"
+    // Örnek: "0, 1, b0, button" veya "0, 2, t0, text"
+    
+    int firstComma = line.indexOf(',');
+    int secondComma = line.indexOf(',', firstComma + 1);
+    int thirdComma = line.indexOf(',', secondComma + 1);
+    
+    if (firstComma == -1 || secondComma == -1 || thirdComma == -1) {
+        _log("Invalid component line: " + line);
+        return;
+    }
+    
+    byte pageId = line.substring(0, firstComma).toInt();
+    byte componentId = line.substring(firstComma + 1, secondComma).toInt();
+    String name = line.substring(secondComma + 1, thirdComma);
+    name.trim();
+    String type = line.substring(thirdComma + 1);
+    type.trim();
+    
+    // Component type'ını standartlaştır
+    type = _mapComponentType(type);
+    
+    // Component oluştur ve listeye ekle
+    NextionComponent comp(pageId, componentId, name, type);
+    _components.push_back(comp);
+    
+    // Lookup map'lerini güncelle
+    _nameMap[name] = &_components.back();
+    _idMap[_makeComponentKey(pageId, componentId)] = &_components.back();
+    
+    _log("Component added: Page=" + String(pageId) + 
+         ", ID=" + String(componentId) + 
+         ", Name=" + name + 
+         ", Type=" + type);
+}
+
+// Component listesi verisini işle
+void FSNextionLib::_handleComponentList(const String& data) {
+    if (data == "component list begin") {
+        _componentListBuffer = "";
+        _components.clear();
+        _nameMap.clear();
+        _idMap.clear();
+        _componentListLoaded = false;
+        _waitingForComponentList = true;
+        _log("Component list transmission started");
+        return;
+    }
+    
+    if (data == "component list end") {
+        _componentListLoaded = true;
+        _waitingForComponentList = false;
+        
+        _log("Component list loaded. Total components: " + String(_components.size()));
+        
+        // Callback çağır
+        if (_componentListCallback) {
+            _componentListCallback(true);
+        }
+        return;
+    }
+    
+    // Component listesi devam ediyor, satırı parse et
+    if (_waitingForComponentList) {
+        _parseComponentLine(data);
+    }
+}
+
+// Component lookup fonksiyonları - CONST VERSİYONLARI EKLENDİ
+bool FSNextionLib::componentExists(const char* componentName) const {
+    return _nameMap.find(String(componentName)) != _nameMap.end();
+}
+
+bool FSNextionLib::componentExists(byte pageId, byte componentId) const {
+    return _idMap.find(_makeComponentKey(pageId, componentId)) != _idMap.end();
+}
+
+NextionComponent* FSNextionLib::getComponentByName(const char* componentName) {
+    auto it = _nameMap.find(String(componentName));
+    return (it != _nameMap.end()) ? it->second : nullptr;
+}
+
+const NextionComponent* FSNextionLib::getComponentByName(const char* componentName) const {
+    auto it = _nameMap.find(String(componentName));
+    return (it != _nameMap.end()) ? it->second : nullptr;
+}
+
+NextionComponent* FSNextionLib::getComponentById(byte pageId, byte componentId) {
+    auto it = _idMap.find(_makeComponentKey(pageId, componentId));
+    return (it != _idMap.end()) ? it->second : nullptr;
+}
+
+const NextionComponent* FSNextionLib::getComponentById(byte pageId, byte componentId) const {
+    auto it = _idMap.find(_makeComponentKey(pageId, componentId));
+    return (it != _idMap.end()) ? it->second : nullptr;
+}
+
+std::vector<NextionComponent*> FSNextionLib::getComponentsByPage(byte pageId) {
+    std::vector<NextionComponent*> result;
+    for (auto& comp : _components) {
+        if (comp.pageId == pageId) {
+            result.push_back(&comp);
+        }
+    }
+    return result;
+}
+
+std::vector<const NextionComponent*> FSNextionLib::getComponentsByPage(byte pageId) const {
+    std::vector<const NextionComponent*> result;
+    for (const auto& comp : _components) {
+        if (comp.pageId == pageId) {
+            result.push_back(&comp);
+        }
+    }
+    return result;
+}
+
+std::vector<NextionComponent*> FSNextionLib::getComponentsByType(const char* type) {
+    std::vector<NextionComponent*> result;
+    String typeStr(type);
+    for (auto& comp : _components) {
+        if (comp.type == typeStr) {
+            result.push_back(&comp);
+        }
+    }
+    return result;
+}
+
+std::vector<const NextionComponent*> FSNextionLib::getComponentsByType(const char* type) const {
+    std::vector<const NextionComponent*> result;
+    String typeStr(type);
+    for (const auto& comp : _components) {
+        if (comp.type == typeStr) {
+            result.push_back(&comp);
+        }
+    }
+    return result;
+}
+
+// YENİ: Akıllı component fonksiyonları
+void FSNextionLib::setTextById(byte pageId, byte componentId, const char* txt) {
+    if (_componentListLoaded) {
+        NextionComponent* comp = getComponentById(pageId, componentId);
+        if (comp && (comp->type == "text" || comp->type == "button")) {
+            setText(comp->name.c_str(), txt);
+            return;
+        }
+    }
+    // Fallback: direct command
+    String compName = "p[" + String(pageId) + "].b[" + String(componentId) + "]";
+    setText(compName.c_str(), txt);
+}
+
+void FSNextionLib::setTextByName(const char* componentName, const char* txt) {
+    if (_componentListLoaded) {
+        NextionComponent* comp = getComponentByName(componentName);
+        if (comp && (comp->type == "text" || comp->type == "button")) {
+            setText(comp->name.c_str(), txt);
+            return;
+        }
+    }
+    // Fallback: direct command
+    setText(componentName, txt);
+}
+
+void FSNextionLib::setNumberById(byte pageId, byte componentId, int value) {
+    if (_componentListLoaded) {
+        NextionComponent* comp = getComponentById(pageId, componentId);
+        if (comp && (comp->type == "number" || comp->type == "gauge" || comp->type == "progress")) {
+            setNumber(comp->name.c_str(), value);
+            return;
+        }
+    }
+    // Fallback: direct command
+    String compName = "p[" + String(pageId) + "].b[" + String(componentId) + "]";
+    setNumber(compName.c_str(), value);
+}
+
+void FSNextionLib::setNumberByName(const char* componentName, int value) {
+    if (_componentListLoaded) {
+        NextionComponent* comp = getComponentByName(componentName);
+        if (comp && (comp->type == "number" || comp->type == "gauge" || comp->type == "progress")) {
+            setNumber(comp->name.c_str(), value);
+            return;
+        }
+    }
+    // Fallback: direct command
+    setNumber(componentName, value);
+}
+
+// YENİ: Akıllı read fonksiyonları
+String FSNextionLib::getTextById(byte pageId, byte componentId) {
+    if (_componentListLoaded) {
+        NextionComponent* comp = getComponentById(pageId, componentId);
+        if (comp && (comp->type == "text" || comp->type == "button")) {
+            return getText(comp->name.c_str());
+        }
+    }
+    // Fallback
+    String compName = "p[" + String(pageId) + "].b[" + String(componentId) + "]";
+    return getText(compName.c_str());
+}
+
+String FSNextionLib::getTextByName(const char* componentName) {
+    if (_componentListLoaded) {
+        NextionComponent* comp = getComponentByName(componentName);
+        if (comp && (comp->type == "text" || comp->type == "button")) {
+            return getText(comp->name.c_str());
+        }
+    }
+    // Fallback
+    return getText(componentName);
+}
+
+int FSNextionLib::getNumberById(byte pageId, byte componentId) {
+    if (_componentListLoaded) {
+        NextionComponent* comp = getComponentById(pageId, componentId);
+        if (comp && (comp->type == "number" || comp->type == "gauge" || comp->type == "progress")) {
+            return getNumber(comp->name.c_str());
+        }
+    }
+    // Fallback
+    String compName = "p[" + String(pageId) + "].b[" + String(componentId) + "]";
+    return getNumber(compName.c_str());
+}
+
+int FSNextionLib::getNumberByName(const char* componentName) {
+    if (_componentListLoaded) {
+        NextionComponent* comp = getComponentByName(componentName);
+        if (comp && (comp->type == "number" || comp->type == "gauge" || comp->type == "progress")) {
+            return getNumber(comp->name.c_str());
+        }
+    }
+    // Fallback
+    return getNumber(componentName);
+}
+
+// Debug için component listesini yazdır - CONST VERSİYON
+void FSNextionLib::printComponentList() {
+    printComponentList();
+}
+
+void FSNextionLib::printComponentList() const {
+    if (!_componentListLoaded) {
+        _log("Component list not loaded yet");
+        return;
+    }
+    
+    Serial.println("=== NEXTION COMPONENT LIST ===");
+    for (const auto& comp : _components) {
+        Serial.printf("Page: %d, ID: %d, Name: %s, Type: %s\n", 
+                     comp.pageId, comp.componentId, comp.name.c_str(), comp.type.c_str());
+    }
+    Serial.println("==============================");
 }
 
 // Checks if the Nextion display is connected and active.
@@ -295,52 +598,71 @@ void FSNextionLib::_handleTouchEvent() {
 
 void FSNextionLib::_handleStringData() {
     // Placeholder for string data handling
-    _clearBuffer(); // Clear unknown string data for now
+    _clearBuffer();
 }
 
 void FSNextionLib::_handleNumericData() {
     // Placeholder for numeric data handling  
-    _clearBuffer(); // Clear unknown numeric data for now
+    _clearBuffer();
 }
 
 void FSNextionLib::_handleSystemEvent(byte eventType) {
     if (_systemCallback) {
         _systemCallback(eventType);
     }
-    _clearBuffer(); // Clear the event data
+    _clearBuffer();
 }
 
 // Main event listener
 void FSNextionLib::listen() {
-    while (_serial.available() >= 1) {
-        byte firstByte = _serial.peek(); // Peek without removing
-        
-        switch (firstByte) {
-            case 0x65: // Touch event
-                _serial.read(); // Remove from buffer
-                if (_serial.available() >= 6) {
-                    _handleTouchEvent();
+    while (_serial.available()) {
+        // String veri geliyor mu kontrol et (component listesi için)
+        if (_serial.available() > 5) {
+            String data = _serial.readStringUntil('\n');
+            data.trim();
+            
+            if (data.length() > 0) {
+                _log("Received: " + data);
+                
+                // Component listesi ile ilgili veri mi?
+                if (data.startsWith("component list") || _waitingForComponentList) {
+                    _handleComponentList(data);
+                    continue;
                 }
-                break;
-                
-            case 0x70: // String data
-            case 0x71: // Numeric data
-                _serial.read();
-                // These are typically responses to get commands, handled separately
-                _clearBuffer();
-                break;
-                
-            case 0x86: // Sleep
-            case 0x87: // Wakeup
-                _serial.read();
-                _handleSystemEvent(firstByte);
-                break;
-                
-            default:
-                // Unknown data, clear one byte and continue
-                _serial.read();
-                _lastError = ErrorCode::INVALID_RESPONSE;
-                break;
+            }
+        }
+        
+        // Binary event'leri işle
+        if (_serial.available() >= 7) {
+            byte firstByte = _serial.peek();
+            
+            switch (firstByte) {
+                case 0x65: // Touch event
+                    _serial.read();
+                    if (_serial.available() >= 6) {
+                        _handleTouchEvent();
+                    }
+                    break;
+                    
+                case 0x70: // String data
+                case 0x71: // Numeric data
+                    _serial.read();
+                    _clearBuffer();
+                    break;
+                    
+                case 0x86: // Sleep
+                case 0x87: // Wakeup
+                    _serial.read();
+                    _handleSystemEvent(firstByte);
+                    break;
+                    
+                default:
+                    _serial.read();
+                    _lastError = ErrorCode::INVALID_RESPONSE;
+                    break;
+            }
+        } else {
+            break;
         }
     }
 }

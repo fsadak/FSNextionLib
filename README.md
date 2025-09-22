@@ -1,4 +1,4 @@
-# FSNextionLib...
+# FSNextionLib
 
 A simple, lightweight, and non-blocking Arduino library for interfacing with Nextion HMI displays, built for the PlatformIO ecosystem.
 

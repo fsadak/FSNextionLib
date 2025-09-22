@@ -3,7 +3,7 @@
 // Constructor
 FSNextionLib::FSNextionLib(HardwareSerial& serial) : _serial(serial) {}
 
-// Component key oluşturma - ARTIK STATIC
+// Component key oluşturma - STATIC olarak düzeltildi
 uint16_t FSNextionLib::_makeComponentKey(byte pageId, byte componentId) {
     return (pageId << 8) | componentId;
 }
@@ -47,14 +47,14 @@ void FSNextionLib::_clearBuffer() {
     }
 }
 
-// Logging function - ARTIK CONST
-void FSNextionLib::_log(const String& message) const {
+// Logging function - CONST kaldırıldı, header ile uyumlu hale getirildi
+void FSNextionLib::_log(const String& message) {
     if (_debug) {
         Serial.println("[FSNextion] " + message);
     }
 }
 
-void FSNextionLib::_log(const char* message) const {
+void FSNextionLib::_log(const char* message) {
     if (_debug) {
         Serial.print("[FSNextion] ");
         Serial.println(message);
@@ -293,12 +293,13 @@ void FSNextionLib::_handleComponentList(const String& data) {
     }
 }
 
-// Component lookup fonksiyonları - CONST VERSİYONLARI EKLENDİ
+// Component lookup fonksiyonları - CONST uyumlu hale getirildi
 bool FSNextionLib::componentExists(const char* componentName) const {
     return _nameMap.find(String(componentName)) != _nameMap.end();
 }
 
 bool FSNextionLib::componentExists(byte pageId, byte componentId) const {
+    // _makeComponentKey artık static, bu yüzden sorun yok
     return _idMap.find(_makeComponentKey(pageId, componentId)) != _idMap.end();
 }
 
@@ -462,12 +463,8 @@ int FSNextionLib::getNumberByName(const char* componentName) {
     return getNumber(componentName);
 }
 
-// Debug için component listesini yazdır - CONST VERSİYON
+// Debug için component listesini yazdır
 void FSNextionLib::printComponentList() {
-    printComponentList();
-}
-
-void FSNextionLib::printComponentList() const {
     if (!_componentListLoaded) {
         _log("Component list not loaded yet");
         return;

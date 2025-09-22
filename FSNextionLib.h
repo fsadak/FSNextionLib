@@ -92,9 +92,13 @@ public:
     bool componentExists(const char* componentName) const;
     bool componentExists(byte pageId, byte componentId) const;
     NextionComponent* getComponentByName(const char* componentName);
+    const NextionComponent* getComponentByName(const char* componentName) const;
     NextionComponent* getComponentById(byte pageId, byte componentId);
+    const NextionComponent* getComponentById(byte pageId, byte componentId) const;
     std::vector<NextionComponent*> getComponentsByPage(byte pageId);
+    std::vector<const NextionComponent*> getComponentsByPage(byte pageId) const;
     std::vector<NextionComponent*> getComponentsByType(const char* type);
+    std::vector<const NextionComponent*> getComponentsByType(const char* type) const;
     
     // Status and connection
     bool isConnected();
@@ -142,7 +146,9 @@ private:
     void _log(const String& message);
     void _log(const char* message);
     bool _readBytes(byte* buffer, size_t length, unsigned long timeout);
-    uint16_t _makeComponentKey(byte pageId, byte componentId);
+    
+    // _makeComponentKey artık static
+    static uint16_t _makeComponentKey(byte pageId, byte componentId);
 };
 
 #endif // FS_NEXTION_LIB_H

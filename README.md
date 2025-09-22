@@ -143,7 +143,7 @@ void handleTouchEvent(byte pageId, byte componentId, byte eventType) {
   Serial.print(", Event: ");
   Serial.println(eventType == 1 ? "Press" : "Release");
 
-  // Example: When the button with ID 3 on page 0 is released...
+  // Example: When the button with ID 1 on page 0 is released...
   if (pageId == 0 && componentId == 1 && eventType == 0) { // eventType 0 = Release 1 = Press
     Serial.println("Custom Button (ID:1) released! Writing text to screen...");
     myNextion.setText("t0", "Button 1 Active");

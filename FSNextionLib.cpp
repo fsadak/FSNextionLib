@@ -3,7 +3,7 @@
 // Constructor
 FSNextionLib::FSNextionLib(HardwareSerial& serial) : _serial(serial) {}
 
-// Initializes communication. Can use custom pins for ESP32.
+// Initializes communication
 void FSNextionLib::begin(long baud, int8_t rxPin, int8_t txPin) {
     #if defined(ESP32)
         if (rxPin > -1 && txPin > -1) {
@@ -12,158 +12,359 @@ void FSNextionLib::begin(long baud, int8_t rxPin, int8_t txPin) {
             _serial.begin(baud);
         }
     #else
-        // For non-ESP32 boards, ignore pin arguments as begin() doesn't support them.
         _serial.begin(baud);
     #endif
+    
+    // Wait for serial to initialize
+    delay(100);
+    _clearBuffer();
+    
+    _log("Nextion library initialized");
 }
 
 // Sends command termination characters
-void FSNextionLib::endCommand() {
+void FSNextionLib::_endCommand() {
     _serial.write(0xFF);
     _serial.write(0xFF);
     _serial.write(0xFF);
+}
+
+// Clears the serial buffer
+void FSNextionLib::_clearBuffer() {
+    while (_serial.available()) {
+        _serial.read();
+    }
+}
+
+// Logging function
+void FSNextionLib::_log(const String& message) {
+    if (_debug) {
+        Serial.println("[FSNextion] " + message);
+    }
+}
+
+void FSNextionLib::_log(const char* message) {
+    if (_debug) {
+        Serial.print("[FSNextion] ");
+        Serial.println(message);
+    }
+}
+
+// Wait for terminator sequence
+bool FSNextionLib::_waitForTerminator(unsigned long timeout) {
+    unsigned long startTime = millis();
+    byte terminatorCount = 0;
+    
+    while (millis() - startTime < timeout) {
+        if (_serial.available()) {
+            byte b = _serial.read();
+            if (b == 0xFF) {
+                terminatorCount++;
+                if (terminatorCount == 3) {
+                    return true;
+                }
+            } else {
+                terminatorCount = 0;
+            }
+        }
+    }
+    return false;
+}
+
+// Read bytes with timeout
+bool FSNextionLib::_readBytes(byte* buffer, size_t length, unsigned long timeout) {
+    unsigned long startTime = millis();
+    size_t bytesRead = 0;
+    
+    while (bytesRead < length && millis() - startTime < timeout) {
+        if (_serial.available()) {
+            buffer[bytesRead++] = _serial.read();
+        }
+    }
+    
+    return bytesRead == length;
 }
 
 // General command sending function
 void FSNextionLib::sendCommand(const char* cmd) {
     _serial.print(cmd);
-    endCommand();
+    _endCommand();
+    _log("Command sent: " + String(cmd));
 }
 
-// Writes text to a text component
+void FSNextionLib::sendCommand(const String& cmd) {
+    sendCommand(cmd.c_str());
+}
+
+// Component control functions
 void FSNextionLib::setText(const char* component, const char* txt) {
     String cmd = String(component) + ".txt=\"" + String(txt) + "\"";
-    _serial.print(cmd);
-    endCommand();
+    sendCommand(cmd);
 }
 
-// Writes a number to a number component
+void FSNextionLib::setText(const String& component, const String& txt) {
+    setText(component.c_str(), txt.c_str());
+}
+
 void FSNextionLib::setNumber(const char* component, int value) {
     String cmd = String(component) + ".val=" + String(value);
-    _serial.print(cmd);
-    endCommand();
+    sendCommand(cmd);
+}
+
+void FSNextionLib::setNumber(const String& component, int value) {
+    setNumber(component.c_str(), value);
+}
+
+void FSNextionLib::setVisible(const char* component, bool visible) {
+    String cmd = String(component) + ".vis=" + String(visible ? 1 : 0);
+    sendCommand(cmd);
+}
+
+void FSNextionLib::setEnabled(const char* component, bool enabled) {
+    String cmd = String(component) + ".ena=" + String(enabled ? 1 : 0);
+    sendCommand(cmd);
+}
+
+void FSNextionLib::setBackgroundColor(const char* component, uint32_t color) {
+    String cmd = String(component) + ".bco=" + String(color);
+    sendCommand(cmd);
+}
+
+void FSNextionLib::setFontColor(const char* component, uint32_t color) {
+    String cmd = String(component) + ".pco=" + String(color);
+    sendCommand(cmd);
+}
+
+void FSNextionLib::setProgress(const char* component, byte value) {
+    String cmd = String(component) + ".val=" + String(value);
+    sendCommand(cmd);
+}
+
+void FSNextionLib::setGauge(const char* component, uint16_t value) {
+    String cmd = String(component) + ".val=" + String(value);
+    sendCommand(cmd);
+}
+
+// Page control - EKSİK OLAN FONKSİYONLAR
+void FSNextionLib::setPage(byte pageId) {
+    String cmd = "page " + String(pageId);
+    sendCommand(cmd);
+}
+
+void FSNextionLib::setPage(const char* pageName) {
+    String cmd = "page " + String(pageName);
+    sendCommand(cmd);
+}
+
+// System commands - EKSİK OLAN FONKSİYONLAR
+void FSNextionLib::sleep(bool enable) {
+    sendCommand(enable ? "sleep=1" : "sleep=0");
+}
+
+void FSNextionLib::wake() {
+    sleep(false);
+}
+
+void FSNextionLib::reset() {
+    sendCommand("rest");
+}
+
+void FSNextionLib::setBrightness(byte brightness) {
+    String cmd = "dim=" + String(brightness);
+    sendCommand(cmd);
 }
 
 // Checks if the Nextion display is connected and active.
 bool FSNextionLib::isConnected() {
-    // Clear any old data from the serial buffer
-    while (_serial.available()) {
-        _serial.read();
-    }
+    _clearBuffer();
+    _lastError = ErrorCode::SUCCESS;
 
-    // Send a universal command that will force a response.
-    // This command asks if the device is in sleep mode and always produces a response.
-    _serial.print("get sleep");
-    endCommand();
-
-    // Check if any response arrives within a short time.
-    long startTime = millis();
-    while (millis() - startTime < 300) { // 300ms timeout is sufficient
+    sendCommand("connect");
+    
+    unsigned long startTime = millis();
+    while (millis() - startTime < 300) {
         if (_serial.available() > 0) {
-            // Response received, clear the buffer and return success.
-            while (_serial.available()) {
-                _serial.read();
-            }
-            return true; // Any response is proof of connection.
+            // Check for valid response (any response is good)
+            _clearBuffer();
+            return true;
         }
     }
-
-    // If it times out, it means there is no connection.
+    
+    _lastError = ErrorCode::NOT_CONNECTED;
     return false;
 }
 
 // Reads the text (.txt) value of a component.
 String FSNextionLib::getText(const char* component) {
+    _lastError = ErrorCode::SUCCESS;
+    
+    if (!isConnected()) {
+        _lastError = ErrorCode::NOT_CONNECTED;
+        return "";
+    }
+    
     String cmd = "get " + String(component) + ".txt";
     sendCommand(cmd.c_str());
 
     String response = "";
-    long startTime = millis();
-    while (millis() - startTime < 500) { // 500ms timeout
+    unsigned long startTime = millis();
+    
+    while (millis() - startTime < _timeout) {
         if (_serial.available()) {
-            char c = _serial.read();
-            if (c == 0x70) { // Text response start byte
-                // Read until the terminator (0xFF 0xFF 0xFF) is found
-                while (millis() - startTime < 500) {
+            byte firstByte = _serial.read();
+            
+            if (firstByte == 0x70) { // Text response start byte
+                // Read text until terminator
+                while (millis() - startTime < _timeout && response.length() < 256) {
                     if (_serial.available()) {
-                        char nextChar = _serial.read();
-                        if (nextChar == 0xFF) { // First byte of the terminator
-                            _serial.read(); // Read the second
-                            _serial.read(); // Read the third
-                            return response; // Return the read text
+                        char c = _serial.read();
+                        if (c == 0xFF) {
+                            // Check for terminator sequence
+                            if (_waitForTerminator(100)) {
+                                _lastError = ErrorCode::SUCCESS;
+                                return response;
+                            }
                         } else {
-                            response += nextChar;
+                            response += c;
                         }
                     }
                 }
+                break;
             }
         }
     }
-    return ""; // Return an empty string on timeout or error
+    
+    _lastError = ErrorCode::TIMEOUT;
+    return "";
 }
 
 // Reads the numeric (.val) value of a component.
 int FSNextionLib::getNumber(const char* component) {
+    _lastError = ErrorCode::SUCCESS;
+    
+    if (!isConnected()) {
+        _lastError = ErrorCode::NOT_CONNECTED;
+        return -1;
+    }
+    
     String cmd = "get " + String(component) + ".val";
     sendCommand(cmd.c_str());
 
-    long startTime = millis();
-    while (millis() - startTime < 500) { // 500ms timeout
+    unsigned long startTime = millis();
+    
+    while (millis() - startTime < _timeout) {
         if (_serial.available()) {
-            char c = _serial.read();
-            if (c == 0x71) { // Numeric response start byte
-                // Read the 4-byte (little-endian) numeric value
-                if (_serial.available() >= 7) { // 4 bytes of data + 3 bytes of terminator
-                    byte buffer[4];
-                    _serial.readBytes(buffer, 4);
-                    // Clear the terminator from the buffer
-                    for(int i=0; i<3; i++) _serial.read();
-                    // Combine the value and return
-                    return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+            byte firstByte = _serial.read();
+            
+            if (firstByte == 0x71) { // Numeric response start byte
+                byte data[4];
+                if (_readBytes(data, 4, 100)) {
+                    if (_waitForTerminator(100)) {
+                        int value = data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
+                        _lastError = ErrorCode::SUCCESS;
+                        return value;
+                    }
                 }
+                break;
             }
         }
     }
-    return -1; // Return -1 on timeout or error
+    
+    _lastError = ErrorCode::TIMEOUT;
+    return -1;
 }
 
-// Registers the callback function for the touch event.
+// Event handlers
+void FSNextionLib::_handleTouchEvent() {
+    byte data[6];
+    if (_readBytes(data, 6, 100)) {
+        // Check terminator
+        if (data[3] == 0xFF && data[4] == 0xFF && data[5] == 0xFF) {
+            if (_touchCallback) {
+                _touchCallback(data[0], data[1], data[2]);
+            }
+        } else {
+            _lastError = ErrorCode::INVALID_RESPONSE;
+        }
+    }
+}
+
+void FSNextionLib::_handleStringData() {
+    // Placeholder for string data handling
+    _clearBuffer(); // Clear unknown string data for now
+}
+
+void FSNextionLib::_handleNumericData() {
+    // Placeholder for numeric data handling  
+    _clearBuffer(); // Clear unknown numeric data for now
+}
+
+void FSNextionLib::_handleSystemEvent(byte eventType) {
+    if (_systemCallback) {
+        _systemCallback(eventType);
+    }
+    _clearBuffer(); // Clear the event data
+}
+
+// Main event listener
+void FSNextionLib::listen() {
+    while (_serial.available() >= 1) {
+        byte firstByte = _serial.peek(); // Peek without removing
+        
+        switch (firstByte) {
+            case 0x65: // Touch event
+                _serial.read(); // Remove from buffer
+                if (_serial.available() >= 6) {
+                    _handleTouchEvent();
+                }
+                break;
+                
+            case 0x70: // String data
+            case 0x71: // Numeric data
+                _serial.read();
+                // These are typically responses to get commands, handled separately
+                _clearBuffer();
+                break;
+                
+            case 0x86: // Sleep
+            case 0x87: // Wakeup
+                _serial.read();
+                _handleSystemEvent(firstByte);
+                break;
+                
+            default:
+                // Unknown data, clear one byte and continue
+                _serial.read();
+                _lastError = ErrorCode::INVALID_RESPONSE;
+                break;
+        }
+    }
+}
+
+// Callback registration - EKSİK OLAN FONKSİYON
 void FSNextionLib::onTouch(TouchEventCallback callback) {
     _touchCallback = callback;
 }
 
-// Listens for incoming data and processes events.
-void FSNextionLib::listen() {
-    // Check if there is enough data for a full event message (usually 7 bytes)
-    if (_serial.available() < 7) {
-        return;
-    }
+void FSNextionLib::onSystemEvent(SystemEventCallback callback) {
+    _systemCallback = callback;
+}
 
-    // Read the first incoming byte
-    byte firstByte = _serial.read();
+// Configuration functions
+void FSNextionLib::setDebug(bool enabled) {
+    _debug = enabled;
+    _log("Debug " + String(enabled ? "enabled" : "disabled"));
+}
 
-    // If it's not a touch event (0x65), ignore it for now.
-    if (firstByte != 0x65) {
-        // Code for other event types (0x70, 0x71, etc.) can be added here.
-        // For now, let's clear the buffer and exit to prevent incorrect accumulation.
-        while(_serial.available()) {
-            _serial.read();
-        }
-        return;
-    }
+void FSNextionLib::setTimeout(unsigned long timeoutMs) {
+    _timeout = timeoutMs;
+}
 
-    // If it's a touch event, read the rest of the data
-    byte pageId = _serial.read();
-    byte componentId = _serial.read();
-    byte eventType = _serial.read(); // 0 = Release, 1 = Press
+// Error handling
+FSNextionLib::ErrorCode FSNextionLib::getLastError() const {
+    return _lastError;
+}
 
-    // Clear the 3 terminator bytes from the buffer
-    _serial.read();
-    _serial.read();
-    _serial.read();
-
-    // If a callback function has been registered, call it.
-    if (_touchCallback) {
-        _touchCallback(pageId, componentId, eventType);
-    }
+void FSNextionLib::clearError() {
+    _lastError = ErrorCode::SUCCESS;
 }

@@ -2,8 +2,6 @@
 
 A simple, lightweight, and non-blocking Arduino library for interfacing with Nextion HMI displays, built for the PlatformIO ecosystem.
 
-This library was collaboratively developed with Google's Gemini.
-
 ## ⚠️ Disclaimer
 
 This library is currently under active development. While functional, the API may change, and it should be used with caution in production environments.
@@ -115,8 +113,10 @@ The following example demonstrates how to use the event listener to handle butto
 **Nextion Setup:**
 
 1.  Create a button on Page 0.
-2.  Set its component ID to `3`.
+2.  Set its component ID to `1`.
 3.  In the "Touch Release Event" tab for the button, check the "Send Component ID" box.
+4.  Create a textbox on Page 0.
+5.  Set its component ID to `t0`.
 
 **Code (`src/main.cpp`):**
 
@@ -144,9 +144,9 @@ void handleTouchEvent(byte pageId, byte componentId, byte eventType) {
   Serial.println(eventType == 1 ? "Press" : "Release");
 
   // Example: When the button with ID 3 on page 0 is released...
-  if (pageId == 0 && componentId == 3 && eventType == 0) { // eventType 0 = Release
-    Serial.println("Custom Button (ID:3) released! Writing text to screen...");
-    myNextion.setText("t0", "Button 3 Active");
+  if (pageId == 0 && componentId == 1 && eventType == 0) { // eventType 0 = Release 1 = Press
+    Serial.println("Custom Button (ID:1) released! Writing text to screen...");
+    myNextion.setText("t0", "Button 1 Active");
   }
 }
 

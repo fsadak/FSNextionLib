@@ -1,61 +1,82 @@
-#include <Arduino.h>
-#include "FSNextionLib.h" // Include your new library
+#include "FSNextionLib.h"
 
-// Create an object using the serial port (Serial2) to which the Nextion display is connected.
-// Default Serial2 pins for ESP32: RX = 16, TX = 17
-FSNextionLib myNextion(Serial2);
+FSNextionLib nextion(Serial2);
 
-/**
- * @brief Callback function that will be called when a touch event is received from Nextion.
- * 
- * @param pageId The ID of the page where the event occurred.
- * @param componentId The ID of the component that triggered the event.
- * @param eventType The type of the event (0: Release, 1: Press).
- */
-void handleTouchEvent(byte pageId, byte componentId, byte eventType) {
-  Serial.print("Event Received! -> ");
-  Serial.print("Page: ");
-  Serial.print(pageId);
-  Serial.print(", Component: ");
-  Serial.print(componentId);
-  Serial.print(", Event: ");
-  Serial.println(eventType == 1 ? "Press" : "Release");
+void handleTouch(byte pageId, byte componentId, byte eventType) {
+    Serial.printf("Touch Event: Page=%d, Component=%d, Event=%s\n", 
+                 pageId, componentId, eventType == 0 ? "Release" : "Press");
+    
+    // Örnek: Sayfa 0, Bileşen 1'e tıklanınca
+    if (pageId == 0 && componentId == 1 && eventType == 0) {
+        nextion.setText("t0", "Merhaba Dünya!");
+        nextion.setNumber("n0", 1234);
+        nextion.setPage(1);
+    }
+}
 
-  // Example: When the button with ID 1 on page 0 is released...
-  if (pageId == 0 && componentId == 1 && eventType == 0) { // eventType 0 = Release 1 = Press
-    Serial.println("Custom Button (ID:1) released! Writing text to screen...");
-    myNextion.setText("t0", "Button 1 Active");
-  }
+void handleSystemEvent(byte eventType) {
+    Serial.printf("System Event: 0x%02X\n", eventType);
+    if (eventType == 0x86) {
+        Serial.println("Nextion uyku moduna geçti");
+    } else if (eventType == 0x87) {
+        Serial.println("Nextion uyandı");
+    }
 }
 
 void setup() {
-  // Start serial communication with the computer for debugging
-  Serial.begin(115200);
-  Serial.println("System starting...");
-
-  // Initialize communication with Nextion
-  myNextion.begin(115200);
-
-  // Wait until the Nextion display is found
-  Serial.println("Searching for Nextion display...");
-  while (!myNextion.isConnected()) {
-    Serial.println("Nextion not found. Retrying in 2 seconds...");
-    delay(2000);
-  }
-
-  Serial.println("Nextion found and active!");
-
-  // Register our event listener function to the library.
-  myNextion.onTouch(handleTouchEvent);
-
-  Serial.println("Event listener ready. Waiting for events from Nextion...");
-  myNextion.setText("t0", "Ready");
+    Serial.begin(115200);
+    delay(1000);
+    
+    Serial.println("Nextion Kütüphane Testi Başlıyor...");
+    
+    // Nextion'ı başlat
+    nextion.begin(115200);
+    nextion.setDebug(true);
+    nextion.setTimeout(1000);
+    
+    // Callback'leri kaydet
+    nextion.onTouch(handleTouch);
+    nextion.onSystemEvent(handleSystemEvent);
+    
+    // Bağlantı kontrolü
+    if (nextion.isConnected()) {
+        Serial.println("Nextion bağlantısı başarılı!");
+        
+        // Başlangıç ayarları
+        nextion.setPage(0);
+        nextion.setText("t0", "Hazır!");
+        nextion.setBrightness(100);
+    } else {
+        Serial.println("Nextion bağlantısı başarısız!");
+    }
 }
 
 void loop() {
-  // In the main loop, only call the listen() function.
-  // This does not block the loop and processes data from Nextion instantly.
-  myNextion.listen();
-
-  // You can add other non-blocking (delay-free) code here.
+    // Sürekli olarak event'leri dinle
+    nextion.listen();
+    
+    // Örnek: Her 10 saniyede bir veri güncelle
+    static unsigned long lastUpdate = 0;
+    if (millis() - lastUpdate > 10000) {
+        lastUpdate = millis();
+        
+        // Sıcaklık değeri güncelle (örnek)
+        int temperature = random(20, 30);
+        nextion.setNumber("tempVal", temperature);
+        
+        // Progress bar güncelle
+        static byte progress = 0;
+        progress = (progress + 10) % 100;
+        nextion.setProgress("progressBar", progress);
+        
+        Serial.println("Veri güncellendi: Sıcaklık=" + String(temperature));
+    }
+    
+    // Hata kontrolü
+    if (nextion.getLastError() != FSNextionLib::ErrorCode::SUCCESS) {
+        Serial.println("Hata kodu: " + String((int)nextion.getLastError()));
+        nextion.clearError();
+    }
+    
+    delay(10); // Küçük bir gecikme
 }

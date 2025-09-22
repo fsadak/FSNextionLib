@@ -13,8 +13,8 @@ public:
     // Constructor: Takes the HardwareSerial port to which Nextion is connected (e.g., Serial2).
     FSNextionLib(HardwareSerial& serial);
 
-    // Initializes serial communication with Nextion.
-    void begin(long baud = 115200);
+    // Initializes serial communication with Nextion. Can use custom pins for ESP32.
+    void begin(long baud = 115200, int8_t rxPin = -1, int8_t txPin = -1);
 
     // A basic function to send commands to Nextion.
     void sendCommand(const char* cmd);

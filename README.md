@@ -2,16 +2,25 @@
 
 A simple, lightweight, and non-blocking Arduino library for interfacing with Nextion HMI displays, built for the PlatformIO ecosystem.
 
+This library was collaboratively developed with Google's Gemini.
+
+## ⚠️ Disclaimer
+
+This library is currently under active development. While functional, the API may change, and it should be used with caution in production environments.
+
 ## Features
 
 - **Event-Driven:** Uses a non-blocking `listen()` model with callbacks to handle touch events without using `delay()`.
 - **Easy Get/Set:** Simple methods to get and set values of text and number components.
+- **Custom Pins:** Supports custom RX/TX pins for ESP32 hardware serial ports.
 - **Connection Check:** Includes a robust `isConnected()` function to verify that the display is active before proceeding.
 - **Lightweight:** Minimal dependencies and a straightforward design.
 
 ## Wiring
 
 To connect your Nextion display to an ESP32, use one of the available Hardware Serial ports. This library was tested with `Serial2`.
+
+### Default Pins (ESP32)
 
 | ESP32 Pin      | Nextion Pin |
 |----------------|-------------|
@@ -38,11 +47,22 @@ This library is designed for PlatformIO.
 
 -   `serial`: The `HardwareSerial` port your Nextion is connected to (e.g., `Serial1`, `Serial2`).
 
-### `begin(long baud = 115200)`
+### `begin(long baud = 115200, int8_t rxPin = -1, int8_t txPin = -1)`
 
-**Description:** Initializes the serial communication with the Nextion display.
+**Description:** Initializes the serial communication with the Nextion display. For ESP32, custom RX and TX pins can be specified.
 
 -   `baud`: The baud rate configured in your Nextion project. Defaults to `115200`.
+-   `rxPin` (Optional, ESP32 only): The RX pin for the serial communication.
+-   `txPin` (Optional, ESP32 only): The TX pin for the serial communication.
+
+**Usage:**
+```cpp
+// Use default pins for Serial2 (GPIO 16, 17)
+myNextion.begin(115200);
+
+// Use custom pins for Serial2 (e.g., RX=26, TX=27)
+myNextion.begin(115200, 26, 27);
+```
 
 ### `isConnected()`
 
@@ -105,7 +125,6 @@ The following example demonstrates how to use the event listener to handle butto
 #include "FSNextionLib.h" // Include your new library
 
 // Create an object using the serial port (Serial2) to which the Nextion display is connected.
-// Default Serial2 pins for ESP32: RX = 16, TX = 17
 FSNextionLib myNextion(Serial2);
 
 /**
@@ -136,8 +155,13 @@ void setup() {
   Serial.begin(115200);
   Serial.println("System starting...");
 
-  // Initialize communication with Nextion
+  // Initialize communication with Nextion using default pins for Serial2 (RX=16, TX=17)
   myNextion.begin(115200);
+  
+  // -- OR --
+  
+  // Initialize with custom pins (e.g., RX=26, TX=27)
+  // myNextion.begin(115200, 26, 27);
 
   // Wait until the Nextion display is found
   Serial.println("Searching for Nextion display...");

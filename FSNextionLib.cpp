@@ -3,9 +3,18 @@
 // Constructor
 FSNextionLib::FSNextionLib(HardwareSerial& serial) : _serial(serial) {}
 
-// Initializes communication
-void FSNextionLib::begin(long baud) {
-    _serial.begin(baud);
+// Initializes communication. Can use custom pins for ESP32.
+void FSNextionLib::begin(long baud, int8_t rxPin, int8_t txPin) {
+    #if defined(ESP32)
+        if (rxPin > -1 && txPin > -1) {
+            _serial.begin(baud, SERIAL_8N1, rxPin, txPin);
+        } else {
+            _serial.begin(baud);
+        }
+    #else
+        // For non-ESP32 boards, ignore pin arguments as begin() doesn't support them.
+        _serial.begin(baud);
+    #endif
 }
 
 // Sends command termination characters

@@ -22,6 +22,7 @@ public:
     int bco();
 
     ComponentProxy& click();
+    ComponentProxy& release();
 
     void cmd(const String& raw);
 

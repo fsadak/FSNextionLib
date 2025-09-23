@@ -142,8 +142,8 @@ myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
 3. 	Create a textbox named t0.
 
 ## Code:
-<code>
-#include \<Arduino.h>\
+```cpp
+#include <Arduino.h>
 #include "FSNextionLib.h"
 
 FSNextionLib myNextion(Serial2);
@@ -170,7 +170,6 @@ void setup() {
 void loop() {
   myNextion.listen();
 }
-</code>
 
 ### Feedback & Contributions
 Pull requests and suggestions are welcome! Whether you're optimizing performance, adding features, or improving documentation—your input helps make FSNextionLib better for everyone.

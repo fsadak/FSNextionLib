@@ -27,6 +27,7 @@ public:
     ComponentProxy& refresh();
     ComponentProxy& enable(bool state);
     ComponentProxy& set(int value);
+    ComponentProxy& update(int value);
 
     void cmd(const String& raw);
 

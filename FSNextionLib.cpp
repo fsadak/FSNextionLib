@@ -25,6 +25,16 @@ void FSNextionLib::sendCommand(const char* cmd) {
     endCommand();
 }
 
+void FSNextionLib::setText(const char* component, const char* txt) {
+    String cmd = String(component) + ".txt=\"" + String(txt) + "\"";
+    sendCommand(cmd.c_str());
+}
+
+void FSNextionLib::setNumber(const char* component, int value) {
+    String cmd = String(component) + ".val=" + String(value);
+    sendCommand(cmd.c_str());
+}
+
 String FSNextionLib::getText(const char* component) {
     String cmd = "get " + String(component) + ".txt";
     sendCommand(cmd.c_str());

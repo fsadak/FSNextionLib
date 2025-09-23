@@ -23,7 +23,7 @@ int ComponentProxy::val() {
 }
 
 ComponentProxy& ComponentProxy::vis(bool visible) {
-    String cmd = _name + ".vis=" + String(visible ? 1 : 0);
+    String cmd = "vis " + _name + "," + String(visible ? 1 : 0);
     _lib->sendCommand(cmd.c_str());
     return *this;
 }

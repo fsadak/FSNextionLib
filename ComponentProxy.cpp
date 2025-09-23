@@ -57,3 +57,9 @@ ComponentProxy& ComponentProxy::click() {
     _lib->sendCommand(cmd.c_str());
     return *this;
 }
+
+ComponentProxy& ComponentProxy::release() {
+    String cmd = "click " + _name + ",0";
+    _lib->sendCommand(cmd.c_str());
+    return *this;
+}

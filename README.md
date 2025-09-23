@@ -85,7 +85,6 @@ myNextion.refresh("b0");         // Redraw component
 Nextion components respond to user interaction through Touch Press and Touch Release events. These can be programmatically enabled or disabled using the tsw command.
 
 FSNextionLib provides two intuitive methods:
-
 <code>
 myNextion.enable("b0", true);   // Enables touch events for 'b0'
 myNextion.touch("b0", false);   // Disables touch events for 'b0'
@@ -105,7 +104,6 @@ myNextion.page("main");         // Switch to page 'main'
 
 ## Touch Event Listener
 Register a callback to handle touch events:
-
 <code>
 myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
   Serial.printf("Touch: page=%d, component=%d, event=%d\n", pageId, componentId, eventType);
@@ -113,7 +111,6 @@ myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
 </code>
 
 Call listen() inside your main loop:
-
 <code>
 void loop() {
   myNextion.listen(); // Non-blocking event processing
@@ -122,7 +119,6 @@ void loop() {
 
 ## Touch Event Listener (Filtered by Page and/or Component)
 You can restrict the touch event handler to only respond to events from a specific page and/or component. For example, to handle events only from page ID 1, use the following pattern:
-
 <code>
 myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
   if (pageId != 1) return; // Ignore events from other pages

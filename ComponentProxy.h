@@ -29,7 +29,6 @@ public:
     ComponentProxy& set(int value);
     ComponentProxy& update(int value);
     ComponentProxy& font(uint8_t fontId);
-    ComponentProxy& style(uint8_t styleId);
 
     void cmd(const String& raw);
 

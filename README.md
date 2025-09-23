@@ -1,17 +1,17 @@
-### FSNextionLib
+# FSNextionLib
 A simple, lightweight, and non-blocking Arduino library for interfacing with Nextion HMI displays—built for the PlatformIO ecosystem and designed for clarity, speed, and ease of use.
 
-### Disclaimer
+# Disclaimer
 This library is under active development. While fully functional, the API may evolve. Use with caution in production environments.
 
-### Features
+# Features
 - **Event-Driven:** Non-blocking listen() model with callback support—no delay() required.
 - **Intuitive API:** Simple methods like txt(), val(), click, vis() for direct component control.
 - **Custom Pins:** Supports RX/TX remapping for ESP32 hardware serial ports.
 - **Connection Check:** Robust isConnected() method to verify display readiness.
 - **Lightweight:** Minimal dependencies and fast compile times.
 
-### Wiring
+# Wiring
 To connect your Nextion display to an ESP32, use one of the available hardware serial ports. This library was tested with ***Serial2***.
 
 ### Default Pins (ESP32)
@@ -25,14 +25,14 @@ To connect your Nextion display to an ESP32, use one of the available hardware s
 
 **Important:** TX from ESP32 goes to RX on Nextion, and RX from ESP32 goes to TX on Nextion.
 
-### Installation
+# Installation
 This library is designed for PlatformIO.
 1. 	Clone or download this repository.
 2. 	Place the ***FSNextionLib*** folder into your project’s ***lib/*** directory or add ***lib_deps = 	https://github.com/fsadak/FSNextionLib.git*** to your platformio.ini file.
 3. 	PlatformIO will automatically detect and include the library.
 
-### API Overview
-Initialization
+# API Overview
+**Initialization**
 <code>
 FSNextionLib myNextion(Serial2); // Use Serial2 or any HardwareSerial
 
@@ -42,14 +42,14 @@ void setup() {
 }
 </code>
 
-### Connection Check
+# Connection Check
 <code>
 if (myNextion.isConnected()) {
   Serial.println("Nextion is ready!");
 }
 </code>
 
-### Component Control
+# Component Control
 
 ## Text
 <code>
@@ -136,12 +136,12 @@ myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
 
 # Example Project
 
-# Nextion Setup:
+## Nextion Setup:
 1. 	Create a button on Page 0 with ID 1.
 2. 	Enable "Send Component ID" in its Touch Release Event.
 3. 	Create a textbox named t0.
 
-# Code:
+## Code:
 <code>
 #include <Arduino.h>
 #include "FSNextionLib.h"

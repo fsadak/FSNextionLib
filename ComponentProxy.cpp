@@ -63,3 +63,15 @@ ComponentProxy& ComponentProxy::release() {
     _lib->sendCommand(cmd.c_str());
     return *this;
 }
+
+ComponentProxy& ComponentProxy::refresh() {
+    String cmd = "ref " + _name;
+    _lib->sendCommand(cmd.c_str());
+    return *this;
+}
+
+ComponentProxy& ComponentProxy::enable(bool state) {
+    String cmd = _name + ".en=" + String(state ? 1 : 0);
+    _lib->sendCommand(cmd.c_str());
+    return *this;
+}

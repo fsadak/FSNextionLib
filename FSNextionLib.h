@@ -28,11 +28,6 @@ public:
     void page(const String& pageName);
     String readRawNextionString(long timeout = 250);
 
-    // 🔹 ComponentProxy erişimi
-    ComponentProxy operator[](const String& name);
-    ComponentProxy operator[](const char* name);
-
-    // 🔹 Yeni işlem odaklı fonksiyonlar
     void txt(const String& objname, const String& value);
     String txt(const String& objname);
 

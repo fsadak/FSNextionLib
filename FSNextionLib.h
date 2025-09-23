@@ -34,6 +34,7 @@ public:
     void listen();
     void onTouch(TouchEventCallback callback);
     String readRawNextionString(long timeout = 250);
+    ComponentProxy operator[](const String& name);
 
 private:
     HardwareSerial& _serial;

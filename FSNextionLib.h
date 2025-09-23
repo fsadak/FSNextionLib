@@ -2,6 +2,7 @@
 #define FS_NEXTION_LIB_H
 
 #include <Arduino.h>
+#include "ComponentProxy.h"
 #include <functional>
 #include <vector>
 

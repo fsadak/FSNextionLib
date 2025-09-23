@@ -1,4 +1,5 @@
 #include "FSNextionLib.h"
+#include "ComponentProxy.h"
 
 FSNextionLib::FSNextionLib(HardwareSerial& serial) : _serial(serial) {}
 
@@ -145,4 +146,8 @@ String FSNextionLib::readRawNextionString(long timeout) {
         }
     }
     return result;
+}
+
+ComponentProxy FSNextionLib::operator[](const String& name) {
+    return ComponentProxy(this, name);
 }

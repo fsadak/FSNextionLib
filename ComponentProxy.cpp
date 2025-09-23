@@ -87,3 +87,9 @@ ComponentProxy& ComponentProxy::update(int value) {
     _lib->sendCommand(cmd.c_str());
     return *this;
 }
+
+ComponentProxy& ComponentProxy::font(uint8_t fontId) {
+    String cmd = _name + ".font=" + String(fontId);
+    _lib->sendCommand(cmd.c_str());
+    return *this;
+}

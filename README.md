@@ -12,7 +12,7 @@ This library is under active development. While fully functional, the API may ev
 - **Lightweight:** Minimal dependencies and fast compile times.
 
 ### Wiring
-To connect your Nextion display to an ESP32, use one of the available hardware serial ports. This library was tested with Serial2.
+To connect your Nextion display to an ESP32, use one of the available hardware serial ports. This library was tested with ***Serial2***.
 
 ### Default Pins (ESP32)
 
@@ -23,22 +23,22 @@ To connect your Nextion display to an ESP32, use one of the available hardware s
 | GPIO 17 (TX2)  | RX          |
 | GPIO 16 (RX2)  | TX          |
 
-Important: TX from ESP32 goes to RX on Nextion, and RX from ESP32 goes to TX on Nextion.
+**Important:** TX from ESP32 goes to RX on Nextion, and RX from ESP32 goes to TX on Nextion.
 
 ### Installation
 This library is designed for PlatformIO.
 1. 	Clone or download this repository.
-2. 	Place the FSNextionLib folder into your project’s lib/ directory or add lib_deps = 	https://github.com/fsadak/FSNextionLib.git to your platformio.ini file.
+2. 	Place the ***FSNextionLib*** folder into your project’s ***lib/*** directory or add ***lib_deps = 	https://github.com/fsadak/FSNextionLib.git*** to your platformio.ini file.
 3. 	PlatformIO will automatically detect and include the library.
 
 ### API Overview
 Initialization
 FSNextionLib myNextion(Serial2); // Use Serial2 or any HardwareSerial
 
-void setup() {
+'''void setup() {
   myNextion.begin(115200);           // Default pins (GPIO 16, 17)
   // myNextion.begin(115200, 26, 27); // Optional custom pins
-}
+}'''
 
 ### Connection Check
 if (myNextion.isConnected()) {

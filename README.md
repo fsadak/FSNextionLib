@@ -5,10 +5,10 @@ A simple, lightweight, and non-blocking Arduino library for interfacing with Nex
 This library is under active development. While fully functional, the API may evolve. Use with caution in production environments.
 
 ### Features
-• 	Event-Driven: Non-blocking  model with callback support—no  required.
-• 	Intuitive API: Simple methods like , , ,  for direct component control.
+• 	Event-Driven: Non-blocking listen() model with callback support—no delay() required.
+• 	Intuitive API: Simple methods like txt(), val(), click, vis() for direct component control.
 • 	Custom Pins: Supports RX/TX remapping for ESP32 hardware serial ports.
-• 	Connection Check: Robust  method to verify display readiness.
+• 	Connection Check: Robust isConnected() method to verify display readiness.
 • 	Lightweight: Minimal dependencies and fast compile times.
 
 ### Wiring
@@ -23,6 +23,7 @@ To connect your Nextion display to an ESP32, use one of the available hardware s
 | GPIO 17 (TX2)  | RX          |
 | GPIO 16 (RX2)  | TX          |
 
+Important: TX from ESP32 goes to RX on Nextion, and RX from ESP32 goes to TX on Nextion.
 
 ### Installation
 This library is designed for PlatformIO.
@@ -66,13 +67,15 @@ myNextion.release("b0");         // Simulate Touch Release
 myNextion.refresh("b0");         // Redraw component
 
 
-### Enable/Disable Touch Events
+## Enable/Disable Touch Events
 Nextion components respond to user interaction through Touch Press and Touch Release events. These can be programmatically enabled or disabled using the tsw command.
+
 FSNextionLib provides two intuitive methods:
+
 myNextion.enable("b0", true);   // Enables touch events for 'b0'
 myNextion.touch("b0", false);   // Disables touch events for 'b0'
 
-## What's the difference?
+# What's the difference?
 Both methods send the same command (tsw b0,1 or tsw b0,0), but they serve different semantic purposes:
 • enable() is used to control whether a component is functionally active—ideal for disabling buttons until a condition is met.
 • touch() is used to suppress or allow touch responsiveness directly—useful during transitions or animations.
@@ -92,6 +95,21 @@ Call listen() inside your main loop:
 void loop() {
   myNextion.listen(); // Non-blocking event processing
 }
+
+## Touch Event Listener (Filtered by Page and/or Component)
+You can restrict the touch event handler to only respond to events from a specific page and/or component. For example, to handle events only from page ID 1, use the following pattern:
+
+myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
+  if (pageId != 1) return; // Ignore events from other pages
+
+  Serial.printf("Touch on Page 1 → Component: %d, Event: %s\n",
+                componentId,
+                eventType == 1 ? "Press" : "Release");
+
+  if (componentId == 2 && eventType == 0) { //1 = Press, 0 = Release
+    myNextion.txt("t0", "Button on Page 1 Released");
+  }
+});
 
 ### Example Project
 # Nextion Setup:
@@ -128,5 +146,5 @@ void loop() {
   myNextion.listen();
 }
 
-Feedback & Contributions
+### Feedback & Contributions
 Pull requests and suggestions are welcome! Whether you're optimizing performance, adding features, or improving documentation—your input helps make FSNextionLib better for everyone.

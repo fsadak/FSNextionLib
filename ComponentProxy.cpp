@@ -51,3 +51,9 @@ int ComponentProxy::bco() {
 void ComponentProxy::cmd(const String& raw) {
     _lib->sendCommand(raw.c_str());
 }
+
+ComponentProxy& ComponentProxy::click() {
+    String cmd = "click " + _name + ",1";
+    _lib->sendCommand(cmd.c_str());
+    return *this;
+}

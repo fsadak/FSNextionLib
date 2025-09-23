@@ -71,7 +71,7 @@ ComponentProxy& ComponentProxy::refresh() {
 }
 
 ComponentProxy& ComponentProxy::enable(bool state) {
-    String cmd = _name + ".en=" + String(state ? 1 : 0);
+    String cmd = "tsw " + _name + "," + String(state ? 1 : 0);
     _lib->sendCommand(cmd.c_str());
     return *this;
 }

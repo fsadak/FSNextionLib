@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include <functional>
 #include <vector>
-#include "ComponentProxy.h"
 
 struct NextionComponent {
     byte pageId;
@@ -31,8 +30,26 @@ public:
     void page(const String& pageName);
     String readRawNextionString(long timeout = 250);
 
+    // 🔹 ComponentProxy erişimi
     ComponentProxy operator[](const String& name);
     ComponentProxy operator[](const char* name);
+
+    // 🔹 Yeni işlem odaklı fonksiyonlar
+    void txt(const String& objname, const String& value);
+    String txt(const String& objname);
+
+    void val(const String& objname, int value);
+    int val(const String& objname);
+
+    void vis(const String& objname, bool visible);
+    void bco(const String& objname, uint16_t color);
+
+    void click(const String& objname);
+    void release(const String& objname);
+    void refresh(const String& objname);
+
+    void enable(const String& objname, bool state);
+    void touch(const String& objname, bool state);
 
 private:
     HardwareSerial& _serial;
@@ -42,4 +59,4 @@ private:
     String _readString(long timeout = 250);
 };
 
-#endif
+#endif // FSNEXTIONLIB_H

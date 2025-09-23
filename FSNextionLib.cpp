@@ -1,5 +1,4 @@
 #include "FSNextionLib.h"
-#include "ComponentProxy.h"
 
 FSNextionLib::FSNextionLib(HardwareSerial& serial) : _serial(serial) {}
 
@@ -146,5 +145,56 @@ ComponentProxy FSNextionLib::operator[](const char* name) {
 
 void FSNextionLib::page(const String& pageName) {
     String cmd = "page " + pageName;
+    sendCommand(cmd.c_str());
+}
+
+void FSNextionLib::txt(const String& objname, const String& value) {
+    setText(objname.c_str(), value.c_str());
+}
+
+String FSNextionLib::txt(const String& objname) {
+    return getText(objname.c_str());
+}
+
+void FSNextionLib::val(const String& objname, int value) {
+    setNumber(objname.c_str(), value);
+}
+
+int FSNextionLib::val(const String& objname) {
+    return getNumber(objname.c_str());
+}
+
+void FSNextionLib::vis(const String& objname, bool visible) {
+    String cmd = "vis " + objname + "," + String(visible ? 1 : 0);
+    sendCommand(cmd.c_str());
+}
+
+void FSNextionLib::bco(const String& objname, uint16_t color) {
+    String cmd = objname + ".bco=" + String(color);
+    sendCommand(cmd.c_str());
+}
+
+void FSNextionLib::click(const String& objname) {
+    String cmd = "click " + objname + ",1";
+    sendCommand(cmd.c_str());
+}
+
+void FSNextionLib::release(const String& objname) {
+    String cmd = "click " + objname + ",0";
+    sendCommand(cmd.c_str());
+}
+
+void FSNextionLib::refresh(const String& objname) {
+    String cmd = "ref " + objname;
+    sendCommand(cmd.c_str());
+}
+
+void FSNextionLib::enable(const String& objname, bool state) {
+    String cmd = "tsw " + objname + "," + String(state ? 1 : 0);
+    sendCommand(cmd.c_str());
+}
+
+void FSNextionLib::touch(const String& objname, bool state) {
+    String cmd = "tsw " + objname + "," + String(state ? 1 : 0);
     sendCommand(cmd.c_str());
 }

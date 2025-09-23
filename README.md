@@ -143,7 +143,8 @@ myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
 
 ## Code:
 <code>
-#include <Arduino.h>
+#include</code> <Arduino.h>
+<code>
 #include "FSNextionLib.h"
 
 FSNextionLib myNextion(Serial2);

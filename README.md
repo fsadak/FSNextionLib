@@ -33,12 +33,14 @@ This library is designed for PlatformIO.
 
 ### API Overview
 Initialization
+<code>
 FSNextionLib myNextion(Serial2); // Use Serial2 or any HardwareSerial
 
-'''void setup() {
+void setup() {
   myNextion.begin(115200);           // Default pins (GPIO 16, 17)
   // myNextion.begin(115200, 26, 27); // Optional custom pins
-}'''
+}
+</code>
 
 ### Connection Check
 if (myNextion.isConnected()) {

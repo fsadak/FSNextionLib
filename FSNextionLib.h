@@ -28,6 +28,7 @@ public:
     bool isConnected();
     void listen();
     void onTouch(TouchEventCallback callback);
+    void page(const String& pageName);
     String readRawNextionString(long timeout = 250);
 
     ComponentProxy operator[](const String& name);

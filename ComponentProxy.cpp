@@ -93,9 +93,3 @@ ComponentProxy& ComponentProxy::font(uint8_t fontId) {
     _lib->sendCommand(cmd.c_str());
     return *this;
 }
-
-ComponentProxy& ComponentProxy::page() {
-    String cmd = "page " + _name;
-    _lib->sendCommand(cmd.c_str());
-    return *this;
-}

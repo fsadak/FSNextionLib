@@ -143,3 +143,8 @@ ComponentProxy FSNextionLib::operator[](const String& name) {
 ComponentProxy FSNextionLib::operator[](const char* name) {
     return ComponentProxy(this, String(name));
 }
+
+void FSNextionLib::page(const String& pageName) {
+    String cmd = "page " + pageName;
+    sendCommand(cmd.c_str());
+}

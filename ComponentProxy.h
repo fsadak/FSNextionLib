@@ -20,9 +20,12 @@ public:
 
     ComponentProxy& bco(uint16_t color);
     int bco();
+    
 
     ComponentProxy& click();
     ComponentProxy& release();
+    ComponentProxy& refresh();
+    ComponentProxy& enable(bool state);
 
     void cmd(const String& raw);
 

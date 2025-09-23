@@ -21,6 +21,8 @@ public:
     ComponentProxy& bco(uint16_t color);
     int bco();
 
+    ComponentProxy& click();
+
     void cmd(const String& raw);
 
 private:

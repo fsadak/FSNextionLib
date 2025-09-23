@@ -134,7 +134,7 @@ myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
 });
 </code>
 
-### Example Project
+# Example Project
 
 # Nextion Setup:
 1. 	Create a button on Page 0 with ID 1.

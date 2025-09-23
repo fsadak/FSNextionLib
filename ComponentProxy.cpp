@@ -93,3 +93,9 @@ ComponentProxy& ComponentProxy::font(uint8_t fontId) {
     _lib->sendCommand(cmd.c_str());
     return *this;
 }
+
+ComponentProxy& ComponentProxy::style(uint8_t styleId) {
+    String cmd = _name + ".style=" + String(styleId);
+    _lib->sendCommand(cmd.c_str());
+    return *this;
+}

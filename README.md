@@ -1,22 +1,18 @@
-# FSNextionLib
+### FSNextionLib
+A simple, lightweight, and non-blocking Arduino library for interfacing with Nextion HMI displays—built for the PlatformIO ecosystem and designed for clarity, speed, and ease of use.
 
-A simple, lightweight, and non-blocking Arduino library for interfacing with Nextion HMI displays, built for the PlatformIO ecosystem.
+### Disclaimer
+This library is under active development. While fully functional, the API may evolve. Use with caution in production environments.
 
-## ⚠️ Disclaimer
+### Features
+• 	Event-Driven: Non-blocking  model with callback support—no  required.
+• 	Intuitive API: Simple methods like , , ,  for direct component control.
+• 	Custom Pins: Supports RX/TX remapping for ESP32 hardware serial ports.
+• 	Connection Check: Robust  method to verify display readiness.
+• 	Lightweight: Minimal dependencies and fast compile times.
 
-This library is currently under active development. While functional, the API may change, and it should be used with caution in production environments.
-
-## Features
-
-- **Event-Driven:** Uses a non-blocking `listen()` model with callbacks to handle touch events without using `delay()`.
-- **Easy Get/Set:** Simple methods to get and set values of text and number components.
-- **Custom Pins:** Supports custom RX/TX pins for ESP32 hardware serial ports.
-- **Connection Check:** Includes a robust `isConnected()` function to verify that the display is active before proceeding.
-- **Lightweight:** Minimal dependencies and a straightforward design.
-
-## Wiring
-
-To connect your Nextion display to an ESP32, use one of the available Hardware Serial ports. This library was tested with `Serial2`.
+### Wiring
+To connect your Nextion display to an ESP32, use one of the available hardware serial ports. This library was tested with Serial2.
 
 ### Default Pins (ESP32)
 
@@ -27,163 +23,110 @@ To connect your Nextion display to an ESP32, use one of the available Hardware S
 | GPIO 17 (TX2)  | RX          |
 | GPIO 16 (RX2)  | TX          |
 
-**Important:** The TX pin of the ESP32 goes to the RX pin of the Nextion, and the RX pin of the ESP32 goes to the TX pin of the Nextion.
 
-## Installation
-
+### Installation
 This library is designed for PlatformIO.
+1. 	Clone or download this repository.
+2. 	Place the FSNextionLib folder into your project’s lib/ directory or add lib_deps = 	https://github.com/fsadak/FSNextionLib.git to your platformio.ini file.
+3. 	PlatformIO will automatically detect and include the library.
 
-1.  Clone or download this repository.
-2.  Place the entire `FSNextionLib` folder into the `lib/` directory of your PlatformIO project.
-3.  PlatformIO's Library Dependency Finder will automatically detect and include the library in your project.
+### API Overview
+Initialization
+FSNextionLib myNextion(Serial2); // Use Serial2 or any HardwareSerial
 
-## API Reference
+void setup() {
+  myNextion.begin(115200);           // Default pins (GPIO 16, 17)
+  // myNextion.begin(115200, 26, 27); // Optional custom pins
+}
 
-### `FSNextionLib(HardwareSerial& serial)`
+### Connection Check
+if (myNextion.isConnected()) {
+  Serial.println("Nextion is ready!");
+}
 
-**Description:** The library constructor.
+### Component Control
+## Text
+myNextion.txt("t0", "Hello World");
+String currentText = myNextion.txt("t0");
 
--   `serial`: The `HardwareSerial` port your Nextion is connected to (e.g., `Serial1`, `Serial2`).
+## Number
+myNextion.val("n0", 42);
+int currentValue = myNextion.val("n0");
 
-### `begin(long baud = 115200, int8_t rxPin = -1, int8_t txPin = -1)`
+## Visibility & Color
+myNextion.vis("b0", false);      // Hide component
+myNextion.vis("b0", true);       // Show component
+myNextion.bco("b0", 63488);      // Set background color (RED)
 
-**Description:** Initializes the serial communication with the Nextion display. For ESP32, custom RX and TX pins can be specified.
+## Touch Simulation
+myNextion.click("b0");           // Simulate Touch Press
+myNextion.release("b0");         // Simulate Touch Release
 
--   `baud`: The baud rate configured in your Nextion project. Defaults to `115200`.
--   `rxPin` (Optional, ESP32 only): The RX pin for the serial communication.
--   `txPin` (Optional, ESP32 only): The TX pin for the serial communication.
+## Refresh
+myNextion.refresh("b0");         // Redraw component
 
-**Usage:**
-```cpp
-// Use default pins for Serial2 (GPIO 16, 17)
-myNextion.begin(115200);
 
-// Use custom pins for Serial2 (e.g., RX=26, TX=27)
-myNextion.begin(115200, 26, 27);
-```
+### Enable/Disable Touch Events
+Nextion components respond to user interaction through Touch Press and Touch Release events. These can be programmatically enabled or disabled using the tsw command.
+FSNextionLib provides two intuitive methods:
+myNextion.enable("b0", true);   // Enables touch events for 'b0'
+myNextion.touch("b0", false);   // Disables touch events for 'b0'
 
-### `isConnected()`
+## What's the difference?
+Both methods send the same command (tsw b0,1 or tsw b0,0), but they serve different semantic purposes:
+• enable() is used to control whether a component is functionally active—ideal for disabling buttons until a condition is met.
+• touch() is used to suppress or allow touch responsiveness directly—useful during transitions or animations.
 
-**Description:** Checks if the display is connected and responsive.
+Note: Disabling touch does not affect visibility. A component may still be visible but unresponsive.
 
--   **Returns:** `true` if a response is received from the display, `false` otherwise.
+## Page Navigation
+myNextion.page("main");         // Switch to page 'main'
 
-### `setText(const char* component, const char* txt)`
+## Touch Event Listener
+Register a callback to handle touch events:
+myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
+  Serial.printf("Touch: page=%d, component=%d, event=%d\n", pageId, componentId, eventType);
+});
 
-**Description:** Sets the `.txt` attribute of a component.
+Call listen() inside your main loop:
+void loop() {
+  myNextion.listen(); // Non-blocking event processing
+}
 
--   `component`: The name of the component (e.g., `"t0"`).
--   `txt`: The text to set.
+### Example Project
+# Nextion Setup:
+1. 	Create a button on Page 0 with ID 1.
+2. 	Enable "Send Component ID" in its Touch Release Event.
+3. 	Create a textbox named t0.
 
-### `setNumber(const char* component, int value)`
-
-**Description:** Sets the `.val` attribute of a component.
-
--   `component`: The name of the component (e.g., `"n0"`, `"h0"`).
--   `value`: The integer value to set.
-
-### `getText(const char* component)`
-
-**Description:** Reads the `.txt` attribute from a component.
-
--   `component`: The name of the component (e.g., `"t0"`).
--   **Returns:** A `String` containing the component's text. Returns an empty string on timeout or error.
-
-### `getNumber(const char* component)`
-
-**Description:** Reads the `.val` attribute from a component.
-
--   `component`: The name of the component (e.g., `"n0"`, `"h0"`).
--   **Returns:** An `int` containing the component's value. Returns `-1` on timeout or error.
-
-### `onTouch(TouchEventCallback callback)`
-
-**Description:** Registers a callback function to be executed when a touch event occurs.
-
--   `callback`: The function to call. It must match the signature: `void myFunc(byte pageId, byte componentId, byte eventType)`.
-
-### `listen()`
-
-**Description:** The core of the event system. This function must be called continuously in your main `loop()` to process incoming events from the Nextion.
-
-## Example Usage
-
-The following example demonstrates how to use the event listener to handle button presses without blocking the main loop.
-
-**Nextion Setup:**
-
-1.  Create a button on Page 0.
-2.  Set its component ID to `1`.
-3.  In the "Touch Release Event" tab for the button, check the "Send Component ID" box.
-4.  Create a textbox on Page 0.
-5.  Set its component ID to `t0`.
-
-**Code (`src/main.cpp`):**
-
-```cpp
+# Code:
 #include <Arduino.h>
-#include "FSNextionLib.h" // Include your new library
+#include "FSNextionLib.h"
 
-// Create an object using the serial port (Serial2) to which the Nextion display is connected.
 FSNextionLib myNextion(Serial2);
 
-/**
- * @brief Callback function that will be called when a touch event is received from Nextion.
- * 
- * @param pageId The ID of the page where the event occurred.
- * @param componentId The ID of the component that triggered the event.
- * @param eventType The type of the event (0: Release, 1: Press).
- */
 void handleTouchEvent(byte pageId, byte componentId, byte eventType) {
-  Serial.print("Event Received! -> ");
-  Serial.print("Page: ");
-  Serial.print(pageId);
-  Serial.print(", Component: ");
-  Serial.print(componentId);
-  Serial.print(", Event: ");
-  Serial.println(eventType == 1 ? "Press" : "Release");
-
-  // Example: When the button with ID 1 on page 0 is released...
-  if (pageId == 0 && componentId == 1 && eventType == 0) { // eventType 0 = Release 1 = Press
-    Serial.println("Custom Button (ID:1) released! Writing text to screen...");
-    myNextion.setText("t0", "Button 1 Active");
+  if (pageId == 0 && componentId == 1 && eventType == 0) {
+    myNextion.txt("t0", "Button 1 Active");
   }
 }
 
 void setup() {
-  // Start serial communication with the computer for debugging
   Serial.begin(115200);
-  Serial.println("System starting...");
-
-  // Initialize communication with Nextion using default pins for Serial2 (RX=16, TX=17)
   myNextion.begin(115200);
-  
-  // -- OR --
-  
-  // Initialize with custom pins (e.g., RX=26, TX=27)
-  // myNextion.begin(115200, 26, 27);
 
-  // Wait until the Nextion display is found
-  Serial.println("Searching for Nextion display...");
   while (!myNextion.isConnected()) {
-    Serial.println("Nextion not found. Retrying in 2 seconds...");
+    Serial.println("Waiting for Nextion...");
     delay(2000);
   }
 
-  Serial.println("Nextion found and active!");
-
-  // Register our event listener function to the library.
   myNextion.onTouch(handleTouchEvent);
-
-  Serial.println("Event listener ready. Waiting for events from Nextion...");
-  myNextion.setText("t0", "Ready");
+  myNextion.txt("t0", "Ready");
 }
 
 void loop() {
-  // In the main loop, only call the listen() function.
-  // This does not block the loop and processes data from Nextion instantly.
   myNextion.listen();
-
-  // You can add other non-blocking (delay-free) code here.
 }
-```
+
+Feedback & Contributions
+Pull requests and suggestions are welcome! Whether you're optimizing performance, adding features, or improving documentation—your input helps make FSNextionLib better for everyone.

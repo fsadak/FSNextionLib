@@ -3,6 +3,15 @@
 
 #include <Arduino.h>
 #include <functional>
+#include <vector>
+
+// Struct to hold information about a single Nextion component
+struct NextionComponent {
+    byte pageId;
+    byte componentId;
+    String name;
+    String type;
+};
 
 // Callback function type: void func(pageId, componentId, eventType)
 // eventType: 0 = Release, 1 = Press
@@ -10,6 +19,9 @@ using TouchEventCallback = std::function<void(byte, byte, byte)>;
 
 class FSNextionLib {
 public:
+    // A vector to store discovered components
+    std::vector<NextionComponent> components;
+
     // Constructor: Takes the HardwareSerial port to which Nextion is connected (e.g., Serial2).
     FSNextionLib(HardwareSerial& serial);
 
@@ -40,11 +52,15 @@ public:
     // Registers a function to be called when a touch event occurs.
     void onTouch(TouchEventCallback callback);
 
+    // Triggers and parses the component discovery process.
+    bool discoverComponents();
+
 private:
     HardwareSerial& _serial; // Serial port reference to be used for Nextion.
     TouchEventCallback _touchCallback = nullptr; // Registered callback function
 
     void endCommand();
+    String _readString(long timeout = 250); // Private helper to read string responses
 };
 
 #endif // FS_NEXTION_LIB_H

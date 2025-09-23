@@ -167,3 +167,47 @@ void FSNextionLib::listen() {
         _touchCallback(pageId, componentId, eventType);
     }
 }
+
+bool FSNextionLib::discoverComponents() {
+    components.clear();
+    sendCommand("tm0.en=1");
+
+    String buffer = "";
+    bool collecting = false;
+
+    while (true) {
+        if (_serial.available()) {
+            byte b = _serial.read();
+            buffer += (char)b;
+
+            if (buffer.endsWith("\xFF\xFF\xFF")) {
+                buffer.remove(buffer.length() - 3);
+                buffer.trim();
+
+                if (buffer == "component list begin") {
+                    collecting = true;
+                } else if (buffer == "component list end") {
+                    break;
+                } else if (collecting) {
+                    int idx1 = buffer.indexOf(',');
+                    int idx2 = buffer.indexOf(',', idx1 + 1);
+                    int idx3 = buffer.indexOf(',', idx2 + 1);
+
+                    if (idx1 > -1 && idx2 > -1 && idx3 > -1) {
+                        NextionComponent comp;
+                        comp.pageId = buffer.substring(0, idx1).toInt();
+                        comp.componentId = buffer.substring(idx1 + 1, idx2).toInt();
+                        comp.name = buffer.substring(idx2 + 1, idx3);
+                        comp.type = buffer.substring(idx3 + 1);
+                        components.push_back(comp);
+                    }
+                }
+
+                buffer = "";
+            }
+        }
+    }
+
+    sendCommand("tm0.en=0");
+    return !components.empty();
+}

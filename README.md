@@ -5,11 +5,11 @@ A simple, lightweight, and non-blocking Arduino library for interfacing with Nex
 This library is under active development. While fully functional, the API may evolve. Use with caution in production environments.
 
 ### Features
-• 	Event-Driven: Non-blocking listen() model with callback support—no delay() required.
-• 	Intuitive API: Simple methods like txt(), val(), click, vis() for direct component control.
-• 	Custom Pins: Supports RX/TX remapping for ESP32 hardware serial ports.
-• 	Connection Check: Robust isConnected() method to verify display readiness.
-• 	Lightweight: Minimal dependencies and fast compile times.
+- **Event-Driven:** Non-blocking listen() model with callback support—no delay() required.
+- **Intuitive API:** Simple methods like txt(), val(), click, vis() for direct component control.
+- **Custom Pins:** Supports RX/TX remapping for ESP32 hardware serial ports.
+- **Connection Check:** Robust isConnected() method to verify display readiness.
+- **Lightweight:** Minimal dependencies and fast compile times.
 
 ### Wiring
 To connect your Nextion display to an ESP32, use one of the available hardware serial ports. This library was tested with Serial2.

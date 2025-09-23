@@ -75,3 +75,9 @@ ComponentProxy& ComponentProxy::enable(bool state) {
     _lib->sendCommand(cmd.c_str());
     return *this;
 }
+
+ComponentProxy& ComponentProxy::set(int value) {
+    String cmd = _name + ".val=" + String(value);
+    _lib->sendCommand(cmd.c_str());
+    return *this;
+}

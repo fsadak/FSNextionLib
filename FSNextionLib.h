@@ -1,31 +1,35 @@
-#ifndef FS_NEXTION_LIB_H
-#define FS_NEXTION_LIB_H
+#ifndef FSNEXTIONLIB_H
+#define FSNEXTIONLIB_H
 
 #include <Arduino.h>
-#include "ComponentProxy.h"
 #include <functional>
 #include <vector>
+#include "ComponentProxy.h"
 
-// Callback function type: void func(pageId, componentId, eventType)
-// eventType: 0 = Release, 1 = Press
+struct NextionComponent {
+    byte pageId;
+    byte componentId;
+    String name;
+    String type;
+};
+
 using TouchEventCallback = std::function<void(byte, byte, byte)>;
 
 class FSNextionLib {
 public:
-    std::vector<NextionComponent> components;
-
     FSNextionLib(HardwareSerial& serial);
 
     void begin(long baud = 115200, int8_t rxPin = -1, int8_t txPin = -1);
     void sendCommand(const char* cmd);
     void setText(const char* component, const char* txt);
     void setNumber(const char* component, int value);
-    bool isConnected();
     String getText(const char* component);
     int getNumber(const char* component);
+    bool isConnected();
     void listen();
     void onTouch(TouchEventCallback callback);
     String readRawNextionString(long timeout = 250);
+
     ComponentProxy operator[](const String& name);
     ComponentProxy operator[](const char* name);
 
@@ -37,4 +41,4 @@ private:
     String _readString(long timeout = 250);
 };
 
-#endif // FS_NEXTION_LIB_H
+#endif

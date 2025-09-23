@@ -148,6 +148,6 @@ String FSNextionLib::readRawNextionString(long timeout) {
     return result;
 }
 
-ComponentProxy FSNextionLib::operator[](const String& name) {
-    return ComponentProxy(this, name);
+ComponentProxy FSNextionLib::operator[](const char* name) {
+    return ComponentProxy(this, String(name));
 }

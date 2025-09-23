@@ -209,5 +209,17 @@ bool FSNextionLib::discoverComponents() {
     }
 
     sendCommand("tm0.en=0");
-    return !components.empty();
+    _componentDiscoveryEnabled = !components.empty(); // Bayrağı güncelle
+    return _componentDiscoveryEnabled;
+}
+
+NextionComponent* FSNextionLib::getComponentByName(const String& name) {
+    if (!_componentDiscoveryEnabled) return nullptr;
+
+    for (auto& comp : components) {
+        if (comp.name == name) {
+            return &comp;
+        }
+    }
+    return nullptr;
 }

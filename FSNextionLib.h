@@ -54,6 +54,7 @@ public:
 
     // Triggers and parses the component discovery process.
     bool discoverComponents();
+    bool isComponentDiscoveryAvailable() const { return _componentDiscoveryEnabled; }
 
 private:
     HardwareSerial& _serial; // Serial port reference to be used for Nextion.
@@ -61,6 +62,8 @@ private:
 
     void endCommand();
     String _readString(long timeout = 250); // Private helper to read string responses
+    bool _componentDiscoveryEnabled = false;
+    NextionComponent* getComponentByName(const String& name);
 };
 
 #endif // FS_NEXTION_LIB_H

@@ -119,6 +119,7 @@ void loop() {
 
 ## Touch Event Listener (Filtered by Page and/or Component)
 You can restrict the touch event handler to only respond to events from a specific page and/or component. For example, to handle events only from page ID 1, use the following pattern:
+
 <code>
 myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
   if (pageId != 1) return; // Ignore events from other pages

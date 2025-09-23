@@ -20,8 +20,6 @@ public:
 
     void begin(long baud = 115200, int8_t rxPin = -1, int8_t txPin = -1);
     void sendCommand(const char* cmd);
-    void setText(const char* component, const char* txt);
-    void setNumber(const char* component, int value);
     String getText(const char* component);
     int getNumber(const char* component);
     bool isConnected();

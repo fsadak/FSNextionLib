@@ -33,62 +33,62 @@ This library is designed for PlatformIO.
 
 # API Overview
 **Initialization**
-<code>
+```cpp
 FSNextionLib myNextion(Serial2); // Use Serial2 or any HardwareSerial
 
 void setup() {
   myNextion.begin(115200);           // Default pins (GPIO 16, 17)
   // myNextion.begin(115200, 26, 27); // Optional custom pins
 }
-</code>
+```
 
 # Connection Check
-<code>
+```cpp
 if (myNextion.isConnected()) {
   Serial.println("Nextion is ready!");
 }
-</code>
+```
 
 # Component Control
 
 ## Text
-<code>
+```cpp
 myNextion.txt("t0", "Hello World");
 String currentText = myNextion.txt("t0");
-</code>
+```
 
 ## Number
-<code>
+```cpp
 myNextion.val("n0", 42);
 int currentValue = myNextion.val("n0");
-</code>
+```
 
 ## Visibility & Color
-<code>
+```cpp
 myNextion.vis("b0", false);      // Hide component
 myNextion.vis("b0", true);       // Show component
 myNextion.bco("b0", 63488);      // Set background color (RED)
-</code>
+```
 
 ## Touch Simulation
-<code>
+```cpp
 myNextion.click("b0");           // Simulate Touch Press
 myNextion.release("b0");         // Simulate Touch Release
-</code>
+```
 
 ## Refresh
-<code>
+```cpp
 myNextion.refresh("b0");         // Redraw component
-</code>
+```
 
 ## Enable/Disable Touch Events
 Nextion components respond to user interaction through Touch Press and Touch Release events. These can be programmatically enabled or disabled using the tsw command.
 
 FSNextionLib provides two intuitive methods:
-<code>
+```cpp
 myNextion.enable("b0", true);   // Enables touch events for 'b0'
 myNextion.touch("b0", false);   // Disables touch events for 'b0'
-</code>
+```
 
 # What's the difference?
 Both methods send the same command (tsw b0,1 or tsw b0,0), but they serve different semantic purposes:
@@ -98,29 +98,29 @@ Both methods send the same command (tsw b0,1 or tsw b0,0), but they serve differ
 Note: Disabling touch does not affect visibility. A component may still be visible but unresponsive.
 
 ## Page Navigation
-<code>
+```cpp
 myNextion.page("main");         // Switch to page 'main'
-</code>
+```
 
 ## Touch Event Listener
 Register a callback to handle touch events:
-<code>
+```cpp
 myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
   Serial.printf("Touch: page=%d, component=%d, event=%d\n", pageId, componentId, eventType);
 });
-</code>
+```
 
 Call listen() inside your main loop:
-<code>
+```cpp
 void loop() {
   myNextion.listen(); // Non-blocking event processing
 }
-</code>
+```
 
 ## Touch Event Listener (Filtered by Page and/or Component)
 You can restrict the touch event handler to only respond to events from a specific page and/or component. For example, to handle events only from page ID 1, use the following pattern:
 
-<code>
+```cpp
 myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
   if (pageId != 1) return; // Ignore events from other pages
 
@@ -132,7 +132,7 @@ myNextion.onTouch([](byte pageId, byte componentId, byte eventType) {
     myNextion.txt("t0", "Button on Page 1 Released");
   }
 });
-</code>
+```
 
 # Example Project
 
@@ -170,6 +170,7 @@ void setup() {
 void loop() {
   myNextion.listen();
 }
+```
 
 ### Feedback & Contributions
 Pull requests and suggestions are welcome! Whether you're optimizing performance, adding features, or improving documentation—your input helps make FSNextionLib better for everyone.
